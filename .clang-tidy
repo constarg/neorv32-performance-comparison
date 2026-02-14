@@ -1,0 +1,29 @@
+---
+Checks: >
+  -*,
+  readability-*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  misc-*
+
+WarningsAsErrors: 'readability-*,clang-analyzer-*,bugprone-*'
+
+CheckOptions:
+  - key:             readability-braces-around-statements.ShortStatementLines
+    value:           '1'
+  - key:             modernize-use-auto.MinTypeNameLength
+    value:           '0'
+  - key: 'clang-analyzer-core.NullDereference'
+    value: '1' 
+  - key: 'clang-analyzer-core.StackAddressEscape'
+    value: '1'
+  - key: 'bugprone-integer-division'
+    value: '1'
+  - key: 'bugprone-throw-keyword-missing'
+    value: '1'
+  - key: 'bugprone-missing-std-terminate'
+    value: '1'
+  - key: 'bugprone-undefined-memory-manipulation'
+    value: '1'
+
