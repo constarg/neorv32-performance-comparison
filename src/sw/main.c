@@ -1,29 +1,73 @@
 #include <neorv32.h>
 #include <stdint.h>
 
+#include "neorv32_cpu.h"
+
+/* This macro is levereged to keep only the
+ * two lower bytes of an number. */
 #define KEEP_TWO_LOWER_BYTES (0xFFFF)
 
+/* This macro is levereged for shifting
+ * a number 2 bytes to some direction. */
 #define SHIFT_TWO_BYTES (16)
 
+/* This macro is a predetermined numerical value
+ * which is used as a devider during the
+ * computation of the Fletcher Hash fucntion. */
 #define FLETCHER_32_DIVIDER (65536)
 
+/* This macro is a predetermined numberical value
+ * which is used as a multiplier during the
+ * computation of the XOR Shift Hash function. */
 #define XOR_SHIFT_MULTIPLIER (2654435761U)
 
+/* This macro is used to shift 13 bits to some
+ * direction. */
 #define XOR_SHIFT_13_BITS (13)
+/* This macro is used to shift 7 bits to some
+ * direction. */
 #define XOR_SHIFT_7_BITS  (7)
 
+/* This macro determines the BAUD RATE of the
+ * UART. */
 #define BAUD_RATE (19200)
 
-#define FUNC7_NOT_USED           (0b0000000)
-#define FLICHER_OPERATION_OPCODE (0b0101)
-#define XOR_MUL_OPERATION_OPCODE (0b0110)
+/* FUNC7_NOT_USED indicates that the FUNC7 bit-field
+ * of the NEORV32 instruction bits aren't used. */
+#define FUNC7_NOT_USED             (0b0000000)
+/* FLETCHER_OPERATION_OPCODE specifies which code is
+ * to be set in the FUNC3 bit-field, in order to execute
+ * the Fletcher Hash function on hardware. */
+#define FLETCHER_OPERATION_OPCODE  (0b0101)
+/* XOR_MUL_OPERATION_OPCODE specifies which code is
+ * to be set in the FUNC3 bit-field, in order to execute
+ * the XOR Shift Hash function. */
+#define XOR_SHIFT_OPERATION_OPCODE (0b0110)
 
-#define FLICHER_OPERATION(SRC_1, SRC_2) \
-    neorv32_cfu_r_instr(FUNC7_NOT_USED, FLICHER_OPERATION_OPCODE, SRC_1, SRC_2)
+/* FLETCHER_OPERATION simplifies the process of calling the
+ * hardware implemented Fletcher Hash function. */
+#define FLETCHER_OPERATION(SRC_1, SRC_2)                                  \
+    neorv32_cfu_r_instr(FUNC7_NOT_USED, FLETCHER_OPERATION_OPCODE, SRC_1, \
+                        SRC_2)
 
-#define XOR_SHIFT_OPERATION(SRC_1, SRC_2) \
-    neorv32_cfu_r_instr(FUNC7_NOT_USED, XOR_MUL_OPERATION_OPCODE, SRC_1, SRC_2)
+/* XOR_SHIFT_OPERATION simplifies the process of calling the
+ * hardware implemented XOR Shift Hash function. */
+#define XOR_SHIFT_OPERATION(SRC_1, SRC_2)                                  \
+    neorv32_cfu_r_instr(FUNC7_NOT_USED, XOR_SHIFT_OPERATION_OPCODE, SRC_1, \
+                        SRC_2)
 
+/* Define the number of times to execute each test. */
+#define SUB_ITERATION_1 (1000)
+#define SUB_ITERATION_2 (1000)
+#define ITERATIONS      (SUB_ITERATION_1 * SUB_ITERATION_2)
+
+/**
+ * fletcher_32_sw Implements the fletcher Hash function from the software
+ * end-point.
+ *
+ * @param src_1 The first block of data.
+ * @param src_2 The second block of data.
+ */
 uint32_t
 fletcher_32_sw(uint32_t src_1, uint32_t src_2)
 {
@@ -38,6 +82,12 @@ fletcher_32_sw(uint32_t src_1, uint32_t src_2)
     return (partial_2 << SHIFT_TWO_BYTES) | partial_1;
 }
 
+/**
+ * xor_shift_sw Implements the XOR Hash function from the software end-point.
+ *
+ * @param src_1 The first block of data.
+ * @param src_2 The second block of data.
+ */
 uint32_t
 xor_shift_sw(uint32_t src_1, uint32_t src_2)
 {
@@ -45,10 +95,121 @@ xor_shift_sw(uint32_t src_1, uint32_t src_2)
     return src_1 * XOR_SHIFT_MULTIPLIER;
 }
 
-int
-main()
+void
+compare_performace_of_fletcher(void)
 {
-    // initialize NEORV32 run-time environment
+    volatile uint64_t cpu_cycles_before; /* Represents the CPU cycles passed,
+                                   from boot, before an operation. */
+    volatile uint64_t cpu_cycles_after;  /* Represents the CPU cycles passed,
+                                   from boot, after an operation is
+                                   finished. */
+    uint64_t          cpu_cycles_took;   /* Represents the total CPU cycles an
+                                            operation took to be done. */
+    uint64_t          cpu_total_cycles;  /* Represents the total number of CPU
+                                            cycles count in every iteration. */
+
+    volatile uint32_t result;
+
+    cpu_total_cycles = 0;
+    /* Execute the Fletcher Hash function in both the hardware
+       and the software and measure the CPU cycles took for
+       both to finish. */
+
+    for (int i = 0; i < SUB_ITERATION_1; i++) {
+        for (int j = 0; j < SUB_ITERATION_2; j++) {
+            cpu_cycles_before = neorv32_cpu_get_cycle();
+            result            = FLETCHER_OPERATION(i, j);
+            cpu_cycles_after  = neorv32_cpu_get_cycle();
+            cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
+            cpu_total_cycles += cpu_cycles_took;
+        }
+    }
+
+    neorv32_uart0_printf("Hardware Fletcher Implementation result: %d\n",
+                         result);
+    neorv32_uart0_printf(
+        "Hardware Fletcher Implementation took: %ul mean cycles\n",
+        cpu_total_cycles / (long)ITERATIONS);
+
+    cpu_total_cycles = 0;
+
+    for (int i = 0; i < SUB_ITERATION_1; i++) {
+        for (int j = 0; j < SUB_ITERATION_2; j++) {
+            cpu_cycles_before = neorv32_cpu_get_cycle();
+            result            = fletcher_32_sw(i, j);
+            cpu_cycles_after  = neorv32_cpu_get_cycle();
+            cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
+            cpu_total_cycles += cpu_cycles_took;
+        }
+    }
+
+    neorv32_uart0_printf("Software Fletcher Implementation result: %d\n",
+                         result);
+    neorv32_uart0_printf(
+        "Software Fletcher Implementation took: %ul mean cycles\n",
+        cpu_total_cycles / (long)ITERATIONS);
+}
+
+void
+compare_performace_of_xor_shift(void)
+{
+    volatile uint64_t cpu_cycles_before; /* Represents the CPU cycles passed,
+                                   from boot, before an operation. */
+    volatile uint64_t cpu_cycles_after;  /* Represents the CPU cycles passed,
+                                   from boot, after an operation is
+                                   finished. */
+    uint64_t          cpu_cycles_took;   /* Represents the total CPU cycles an
+                                            operation took to be done. */
+    uint64_t          cpu_total_cycles;  /* Represents the total number of CPU
+                                            cycles count in every iteration. */
+
+    volatile uint32_t result;
+
+    cpu_total_cycles = 0;
+    /* Execute the XOR Shift Hash function in both the hardware
+       and the software and measure the CPU cycles took for
+       both to finish. */
+
+    for (int i = 0; i < SUB_ITERATION_1; i++) {
+        for (int j = 0; j < SUB_ITERATION_2; j++) {
+            cpu_cycles_before = neorv32_cpu_get_cycle();
+            result            = XOR_SHIFT_OPERATION(i, j);
+            cpu_cycles_after  = neorv32_cpu_get_cycle();
+            cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
+            cpu_total_cycles += cpu_cycles_took;
+        }
+    }
+    neorv32_uart0_printf("Hardware XOR Shift Implementation result: %d\n",
+                         result);
+
+    neorv32_uart0_printf(
+        "Hardware XOR Shift Implementation took: %ul mean cycles\n",
+        cpu_total_cycles / (long)ITERATIONS);
+
+    cpu_total_cycles = 0;
+
+    for (int i = 0; i < SUB_ITERATION_1; i++) {
+        for (int j = 0; j < SUB_ITERATION_2; j++) {
+            cpu_cycles_before = neorv32_cpu_get_cycle();
+            result            = xor_shift_sw(i, j);
+            cpu_cycles_after  = neorv32_cpu_get_cycle();
+            cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
+            cpu_total_cycles += cpu_cycles_took;
+        }
+    }
+
+    neorv32_uart0_printf("Software XOR Shift Implementation result: %d\n",
+                         result);
+
+    neorv32_uart0_printf(
+        "Software XOR Shift Implementation took: %ul mean cycles\n",
+        cpu_total_cycles / (long)ITERATIONS);
+}
+
+int
+main(void)
+{
+    /* initialize NEORV32 run-time environment */
     neorv32_rte_setup();
 
     /* Validate that UART is implemented. */
@@ -56,28 +217,18 @@ main()
         return -1;  // UART0 not available, exit
     }
 
-    // Initiatet the UART in the 19200 baud rate.
+    /* Initiatet the UART in the 19200 baud rate. */
     neorv32_uart0_setup(BAUD_RATE, 0);
 
-    // check if the CFU is implemented (the CFU is wrapped in the core's
-    // "Zxcfu" ISA extension)
+    /* Ensure that the CFU is available. */
     if (neorv32_cfu_available() == 0) {
         neorv32_uart0_printf(
             "ERROR! CFU ('Zxcfu' ISA extension) not implemented!\n");
         return -1;
     }
 
-    uint32_t result_hw = FLICHER_OPERATION(5, 8);
-    neorv32_uart0_printf("HW Flicher result: %d\n", result_hw);
-
-    uint32_t result_sw = fletcher_32_sw(5, 8);
-    neorv32_uart0_printf("SW Flicher result: %d\n", result_sw);
-
-    uint32_t result_2_hw = XOR_SHIFT_OPERATION(7, 7);
-    neorv32_uart0_printf("HW XOR result: %ul\n", result_2_hw);
-
-    uint32_t result_2_sw = xor_shift_sw(7, 7);
-    neorv32_uart0_printf("SW XOR result: %ul\n", result_2_sw);
+    compare_performace_of_fletcher();
+    compare_performace_of_xor_shift();
 
     return 0;
 }

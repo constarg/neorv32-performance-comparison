@@ -1,0 +1,5 @@
+[libraries]
+# Specify where your VHDL files are
+deafultlib.files = [
+    './src/hw/*.vhd',
+]

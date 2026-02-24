@@ -46,9 +46,9 @@ architecture Behavioral of hash_function_acceleration is
     constant r_type_c : std_ulogic := '0'; -- R-type CFU instructions (custom-0 opcode)
    
     -- Specify the funct3 bit-field value for the Fletcher Hash function.
-    constant fletcher_32_func : std_ulogic_vector(2 downto 0) := "101";
+    constant FLECHER_32_FUNC : std_ulogic_vector(2 downto 0) := "101";
     -- Specify the funct3 bit-field value for the XOR Shift Hash function.
-    constant xor_shift_func   : std_ulogic_vector(2 downto 0) := "110";
+    constant XOR_SHIFT_FUNC   : std_ulogic_vector(2 downto 0) := "110";
    
     -- Define the numerical constants required for the two Hash functions.
     constant FLETCHER_CONST  : std_ulogic_vector(31 downto 0) := x"00010000";
@@ -84,7 +84,6 @@ architecture Behavioral of hash_function_acceleration is
     signal xor_sh_opa_xor      : std_ulogic_vector(31 downto 0);
 
 begin
-
     hash_core: process(rstn_i, clk_i)
         -- xor_sh_mul_result variable contain the value of the multiplication 
         -- state of the xor shift hash function.
@@ -111,10 +110,10 @@ begin
 
                 -- Calcualte the respective Hash function.
                 if (hash.done(0) = '1') then
-                    if (funct3_i(1 downto 0) = fletcher_32_func(1 downto 0)) then
+                    if (funct3_i(1 downto 0) = FLECHER_32_FUNC(1 downto 0)) then
                         -- Finish calculations for the Fletcher Hash function.
                         hash.res <= fetcher_partial_shifted or fetcher_sum_of_opa;
-                    elsif (funct3_i(1 downto 0) = xor_shift_func(1 downto 0)) then
+                    elsif (funct3_i(1 downto 0) = XOR_SHIFT_FUNC(1 downto 0)) then
                         -- Finish calculations for the XOR Shift Hash function.
                         xor_sh_mul_result := std_ulogic_vector(unsigned(xor_sh_opa_xor) * unsigned(XOR_SHIFT_CONST));
                         -- Keep only the 32 lower bits.
@@ -164,7 +163,7 @@ begin
     begin
         if (type_i = r_type_c) then
             case funct3_i is 
-                when fletcher_32_func | xor_shift_func => 
+                when FLECHER_32_FUNC | XOR_SHIFT_FUNC => 
                     -- Output the result of the coresponding Hash function.
                     result_o <= hash.res;
                     -- Output the DONE bit, to indicate when the operation
