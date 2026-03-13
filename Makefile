@@ -24,7 +24,7 @@ USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=8k
 
 # Additional sources
 APP_SRC += $(wildcard ./src/sw/*.c)
-#APP_INC += -I .
+APP_INC += -I ./include/
 
 BIN_DIR ?= ./bin
 
