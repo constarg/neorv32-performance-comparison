@@ -29,7 +29,7 @@ compare_performace_of_fletcher(void)
     for (int i = 0; i < SUB_ITERATION_1; i++) {
         for (int j = 0; j < SUB_ITERATION_2; j++) {
             cpu_cycles_before = neorv32_cpu_get_cycle();
-            result            = FLETCHER_OPERATION(i, j);
+            result            = FLETCHER_OPERATION_HW(i, j);
             cpu_cycles_after  = neorv32_cpu_get_cycle();
             cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
             cpu_total_cycles += cpu_cycles_took;
@@ -84,7 +84,7 @@ compare_performace_of_xor_shift(void)
     for (int i = 0; i < SUB_ITERATION_1; i++) {
         for (int j = 0; j < SUB_ITERATION_2; j++) {
             cpu_cycles_before = neorv32_cpu_get_cycle();
-            result            = XOR_SHIFT_OPERATION(i, j);
+            result            = XOR_SHIFT_OPERATION_HW(i, j);
             cpu_cycles_after  = neorv32_cpu_get_cycle();
             cpu_cycles_took   = cpu_cycles_after - cpu_cycles_before;
             cpu_total_cycles += cpu_cycles_took;
@@ -115,4 +115,9 @@ compare_performace_of_xor_shift(void)
     neorv32_uart0_printf(
         "Software XOR Shift Implementation took: %ul mean cycles\n",
         cpu_total_cycles / (long)ITERATIONS);
+}
+
+void
+compare_performace_of_blake2(void)
+{
 }

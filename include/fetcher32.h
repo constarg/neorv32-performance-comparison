@@ -17,7 +17,7 @@
 
 /* FLETCHER_OPERATION simplifies the process of calling the
  * hardware implemented Fletcher Hash function. */
-#define FLETCHER_OPERATION(SRC_1, SRC_2)                                  \
+#define FLETCHER_OPERATION_HW(SRC_1, SRC_2)                               \
     neorv32_cfu_r_instr(FUNC7_NOT_USED, FLETCHER_OPERATION_OPCODE, SRC_1, \
                         SRC_2)
 

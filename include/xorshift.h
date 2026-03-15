@@ -22,7 +22,7 @@
 
 /* XOR_SHIFT_OPERATION simplifies the process of calling the
  * hardware implemented XOR Shift Hash function. */
-#define XOR_SHIFT_OPERATION(SRC_1, SRC_2)                                  \
+#define XOR_SHIFT_OPERATION_HW(SRC_1, SRC_2)                               \
     neorv32_cfu_r_instr(FUNC7_NOT_USED, XOR_SHIFT_OPERATION_OPCODE, SRC_1, \
                         SRC_2)
 
