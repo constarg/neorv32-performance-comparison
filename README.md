@@ -16,7 +16,7 @@ sudo dnf group install "development-tools"
 ```
 
 # Setup 
-Before proceeding with the compilation of the project, there are two things that must be configured. The first is the toolchain for the **RISC-V **architecture. The second is the NEORV32 project itself.
+Before proceeding with the compilation of the project, there are two things that must be configured. The first is the toolchain for the **RISC-V** architecture. The second is the NEORV32 project itself.
 
 ## Tool Chain 
 The project was compiled and tested using **riscv-none-elf-gcc-15.2.0-1**; please consider using this version.<br>
