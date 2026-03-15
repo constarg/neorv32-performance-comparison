@@ -5,14 +5,22 @@
 #include "neorv32.h"
 #include "neorv32_cfs.h"
 
+#define X_VALUE (0xAAAAAAAAu)
+#define Y_VALUE (0x55555555u)
+
+#define V_CONTENT (0x11111111u)
+
 // NOLINTBEGIN(readability-magic-numbers)
 static inline uint32_t
-rotr32(uint32_t x, unsigned n)
+rotr32(uint32_t x, unsigned n)  // NOLINT(*)
 {
     return (x >> n) | (x << (32U - n));
 }
+
+/* G Impelements the G function in software. */
 static inline void
-G(uint32_t v[16], int a, int b, int c, int d, uint32_t x, uint32_t y)
+G(uint32_t v[16], int a, int b, int c, int d, uint32_t x,  // NOLINT(*)
+  uint32_t y)                                              // NOLINT(*)
 {
     v[a] = v[a] + v[b] + x;
     v[d] = rotr32(v[d] ^ v[a], 16);
@@ -24,50 +32,64 @@ G(uint32_t v[16], int a, int b, int c, int d, uint32_t x, uint32_t y)
     v[b] = rotr32(v[b] ^ v[c], 7);
 }
 
+/* G_hw Executes the accelerated version of G, in the CO-Processor. */
 static inline void
-G_hw(uint32_t v[16], int a, int b, int c, int d, uint32_t x, uint32_t y)
+G_hw(uint32_t v[16], int a, int b, int c, int d, uint32_t x,  // NOLINT(*)
+     uint32_t y)                                              // NOLINT(*)
 {
-    NEORV32_CFS->REG[0] = v[a];  // NOLINT(*)
-    NEORV32_CFS->REG[1] = v[b];  // NOLINT(*)
-    NEORV32_CFS->REG[2] = v[c];  // NOLINT(*)
-    NEORV32_CFS->REG[3] = v[d];  // NOLINT(*)
+    /* Write the required data into the CO-Processor's memory. */
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_V_A] = v[a];  // NOLINT(*)
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_V_B] = v[b];  // NOLINT(*)
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_V_C] = v[c];  // NOLINT(*)
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_V_D] = v[d];  // NOLINT(*)
 
-    NEORV32_CFS->REG[4] = x;           // NOLINT(*)
-    NEORV32_CFS->REG[5] = y;           // NOLINT(*)
-    NEORV32_CFS->REG[6] = 0x0000000F;  // NOLINT(*)
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_X] = x;  // NOLINT(*)
+    NEORV32_CFS->REG[CFS_ADDRESS_OF_Y] = y;  // NOLINT(*)
 
+    blakes2_hw_start_processing();
+
+    /* Wait for the CO-Processor to assert an CFS interrupt. */
     neorv32_cpu_sleep();
 
-    v[a] = NEORV32_CFS->REG[0];  // NOLINT(*)
-    v[b] = NEORV32_CFS->REG[1];  // NOLINT(*)
-    v[c] = NEORV32_CFS->REG[2];  // NOLINT(*)
-    v[d] = NEORV32_CFS->REG[3];  // NOLINT(*)
+    /* Read the result. */
+    v[a] = NEORV32_CFS->REG[CFS_ADDRESS_OF_V_A];  // NOLINT(*)
+    v[b] = NEORV32_CFS->REG[CFS_ADDRESS_OF_V_B];  // NOLINT(*)
+    v[c] = NEORV32_CFS->REG[CFS_ADDRESS_OF_V_C];  // NOLINT(*)
+    v[d] = NEORV32_CFS->REG[CFS_ADDRESS_OF_V_D];  // NOLINT(*)
 }
 
-void
+uint32_t*
 blake2_sw(void)
 {
-    uint32_t v[16];
-    uint32_t x = 0xAAAAAAAAu;
-    uint32_t y = 0x55555555u;
+    static uint32_t v_sw[BLAKES_ARRAY_SIZE];  // NOLINT(*)
+    uint32_t        x = X_VALUE;              // NOLINT(*)
+    uint32_t        y = Y_VALUE;              // NOLINT(*)
 
     /* Deterministic initial values */
-    for (int i = 0; i < 16; i++) { v[i] = 0x11111111u * (uint32_t)(i + 1); }
+    for (int i = 0; i < BLAKES_ARRAY_SIZE; i++) {
+        v_sw[i] = V_CONTENT * (uint32_t)(i + 1);
+    }
 
-    G(v, 0, 4, 8, 12, x, y);
+    G(v_sw, 0, 4, 8, 12, x, y);
+
+    return v_sw;
 }
 
-void
+uint32_t*
 blake2_hw(void)
 {
-    uint32_t v[16];
-    uint32_t x = 0xAAAAAAAAu;
-    uint32_t y = 0x55555555u;
+    static uint32_t v_hw[BLAKES_ARRAY_SIZE];  // NOLINT(*)
+    uint32_t        x = X_VALUE;              // NOLINT(*)
+    uint32_t        y = Y_VALUE;              // NOLINT(*)
 
     /* Deterministic initial values */
-    for (int i = 0; i < 16; i++) { v[i] = 0x11111111u * (uint32_t)(i + 1); }
+    for (int i = 0; i < BLAKES_ARRAY_SIZE; i++) {
+        v_hw[i] = V_CONTENT * (uint32_t)(i + 1);
+    }
 
-    G_hw(v, 0, 4, 8, 12, x, y);
+    G_hw(v_hw, 0, 4, 8, 12, x, y);
+
+    return v_hw;
 }
 
 // NOLINTEND(readability-magic-numbers)

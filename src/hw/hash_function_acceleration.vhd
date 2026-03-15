@@ -22,21 +22,21 @@ use neorv32.neorv32_package.all;
 entity hash_function_acceleration is
   port (
     -- global control --
-    clk_i    : in  std_ulogic;                     -- global clock, rising edge
-    rstn_i   : in  std_ulogic;                     -- global reset, low-active, async
+    clk_i    : in  STD_ULOGIC;                     -- global clock, rising edge
+    rstn_i   : in  STD_ULOGIC;                     -- global reset, low-active, async
     -- ctrl_i  : in  ctrl_bus_t;                   -- main control bus
     -- operation trigger --
-    start_i  : in  std_ulogic;                     -- start trigger, single-shot
+    start_i  : in  STD_ULOGIC;                     -- start trigger, single-shot
     -- operands --
-    type_i   : in  std_ulogic;                     -- instruction type (0 = R-type, 1 = I-type)
-    funct3_i : in  std_ulogic_vector(2 downto 0);  -- "funct3" bit-field from instruction word
-    funct7_i : in  std_ulogic_vector(6 downto 0);  -- "funct7" bit-field from instruction word (R-type only)
-    imm12_i  : in  std_ulogic_vector(11 downto 0); -- "imm12" bit-field from instruction word (I-type only)
-    rs1_i    : in  std_ulogic_vector(31 downto 0); -- rf source 1 via "rs1" bit-field from instruction word
-    rs2_i    : in  std_ulogic_vector(31 downto 0); -- rf source 2 via "rs2" bit-field from instruction word
+    type_i   : in  STD_ULOGIC;                     -- instruction type (0 = R-type, 1 = I-type)
+    funct3_i : in  STD_ULOGIC_VECTOR(2 downto 0);  -- "funct3" bit-field from instruction word
+    funct7_i : in  STD_ULOGIC_VECTOR(6 downto 0);  -- "funct7" bit-field from instruction word (R-type only)
+    imm12_i  : in  STD_ULOGIC_VECTOR(11 downto 0); -- "imm12" bit-field from instruction word (I-type only)
+    rs1_i    : in  STD_ULOGIC_VECTOR(31 downto 0); -- rf source 1 via "rs1" bit-field from instruction word
+    rs2_i    : in  STD_ULOGIC_VECTOR(31 downto 0); -- rf source 2 via "rs2" bit-field from instruction word
     -- result and status --
-    result_o : out std_ulogic_vector(31 downto 0); -- operation result
-    valid_o  : out std_ulogic                      -- operation done
+    result_o : out STD_ULOGIC_VECTOR(31 downto 0); -- operation result
+    valid_o  : out STD_ULOGIC                      -- operation done
   );
 end hash_function_acceleration;
 
@@ -46,48 +46,48 @@ architecture Behavioral of hash_function_acceleration is
     constant r_type_c : std_ulogic := '0'; -- R-type CFU instructions (custom-0 opcode)
    
     -- Specify the funct3 bit-field value for the Fletcher Hash function.
-    constant FLECHER_32_FUNC : std_ulogic_vector(2 downto 0) := "101";
+    constant FLECHER_32_FUNC : STD_ULOGIC_VECTOR(2 downto 0) := "101";
     -- Specify the funct3 bit-field value for the XOR Shift Hash function.
-    constant XOR_SHIFT_FUNC   : std_ulogic_vector(2 downto 0) := "110";
+    constant XOR_SHIFT_FUNC   : STD_ULOGIC_VECTOR(2 downto 0) := "110";
    
     -- Define the numerical constants required for the two Hash functions.
-    constant FLETCHER_CONST  : std_ulogic_vector(31 downto 0) := x"00010000";
-    constant XOR_SHIFT_CONST : std_ulogic_vector(31 downto 0) := x"9E3779B1";
+    constant FLETCHER_CONST  : STD_ULOGIC_VECTOR(31 downto 0) := x"00010000";
+    constant XOR_SHIFT_CONST : STD_ULOGIC_VECTOR(31 downto 0) := x"9E3779B1";
 
     -- Define the following record to keep track of the computational process. --
     type hash_t is record
-        done : std_ulogic_vector(1 downto 0);
-        opa  : std_ulogic_vector(31 downto 0); -- input operand a
-        opb  : std_ulogic_vector(31 downto 0); -- input operand b
-        res  : std_ulogic_vector(31 downto 0); -- operation results
+        done : STD_ULOGIC_VECTOR(1 downto 0);
+        opa  : STD_ULOGIC_VECTOR(31 downto 0); -- input operand a
+        opb  : STD_ULOGIC_VECTOR(31 downto 0); -- input operand b
+        res  : STD_ULOGIC_VECTOR(31 downto 0); -- operation results
     end record;
     
     signal hash : hash_t;
 
     -- The following signals are used as steps in Fletcher hash function. --
-    signal fetcher_opa_and_ffff : std_ulogic_vector(31 downto 0);
-    signal fetcher_opa_shift_16 : std_ulogic_vector(31 downto 0);
-    signal fetcher_sum_of_opa   : std_ulogic_vector(31 downto 0);
+    signal fetcher_opa_and_ffff : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_opa_shift_16 : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_sum_of_opa   : STD_ULOGIC_VECTOR(31 downto 0);
     
-    signal fetcher_opb_and_ffff       : std_ulogic_vector(31 downto 0);
-    signal fetcher_opb_shift_16       : std_ulogic_vector(31 downto 0);
-    signal fetcher_sum_of_opb_partial : std_ulogic_vector(31 downto 0);
-    signal fetcher_sum_of_opb         : std_ulogic_vector(31 downto 0);
+    signal fetcher_opb_and_ffff       : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_opb_shift_16       : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_sum_of_opb_partial : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_sum_of_opb         : STD_ULOGIC_VECTOR(31 downto 0);
 
-    signal fetcher_partial         : std_ulogic_vector(31 downto 0);
-    signal fetcher_partial_shifted : std_ulogic_vector(31 downto 0);
+    signal fetcher_partial         : STD_ULOGIC_VECTOR(31 downto 0);
+    signal fetcher_partial_shifted : STD_ULOGIC_VECTOR(31 downto 0);
     
     -- The following signals are used as steps in XOR Shift hash function --
-    signal xor_sh_opb_shift_13 : std_ulogic_vector(31 downto 0);
-    signal xor_sh_opb_shift_7  : std_ulogic_vector(31 downto 0);
-    signal xor_sh_opb_xor      : std_ulogic_vector(31 downto 0);
-    signal xor_sh_opa_xor      : std_ulogic_vector(31 downto 0);
+    signal xor_sh_opb_shift_13 : STD_ULOGIC_VECTOR(31 downto 0);
+    signal xor_sh_opb_shift_7  : STD_ULOGIC_VECTOR(31 downto 0);
+    signal xor_sh_opb_xor      : STD_ULOGIC_VECTOR(31 downto 0);
+    signal xor_sh_opa_xor      : STD_ULOGIC_VECTOR(31 downto 0);
 
 begin
     hash_core: process(rstn_i, clk_i)
         -- xor_sh_mul_result variable contain the value of the multiplication 
         -- state of the xor shift hash function.
-        variable xor_sh_mul_result: std_ulogic_vector(63 downto 0);
+        variable xor_sh_mul_result: STD_ULOGIC_VECTOR(63 downto 0);
         begin
             if (rstn_i = '0') then
                 hash.done <= (others => '0');
@@ -115,7 +115,7 @@ begin
                         hash.res <= fetcher_partial_shifted or fetcher_sum_of_opa;
                     elsif (funct3_i(1 downto 0) = XOR_SHIFT_FUNC(1 downto 0)) then
                         -- Finish calculations for the XOR Shift Hash function.
-                        xor_sh_mul_result := std_ulogic_vector(unsigned(xor_sh_opa_xor) * unsigned(XOR_SHIFT_CONST));
+                        xor_sh_mul_result := STD_ULOGIC_VECTOR(UNSIGNED(xor_sh_opa_xor) * UNSIGNED(XOR_SHIFT_CONST));
                         -- Keep only the 32 lower bits.
                         hash.res <= xor_sh_mul_result(31 downto 0);
                     end if;
@@ -129,19 +129,19 @@ begin
     -- The following VHDL code executes the ((A >> 16) & 0xFFFF).
     fetcher_opa_shift_16 <= "0000000000000000" & hash.opa(31 downto 16);
     -- The following VHDL code executes the (s1 = (A & 0xFFFF) + ((A >> 16) & 0xFFFF)).
-    fetcher_sum_of_opa   <= std_ulogic_vector(unsigned(fetcher_opa_and_ffff) + unsigned(fetcher_opa_shift_16));
+    fetcher_sum_of_opa   <= STD_ULOGIC_VECTOR(UNSIGNED(fetcher_opa_and_ffff) + UNSIGNED(fetcher_opa_shift_16));
 
     -- The following VHDL code executes the (B & 0xFFFF)
     fetcher_opb_and_ffff       <= "0000000000000000" & hash.opb(15 downto 0);
     -- The following VHDL code executes the ((B >> 16) & 0xFFFF).
     fetcher_opb_shift_16       <= "0000000000000000" & hash.opb(31 downto 16);
     -- The following VHDL code executes the (S1 + (B & 0xFFFF)).
-    fetcher_sum_of_opb_partial <= std_ulogic_vector(unsigned(fetcher_sum_of_opa) + unsigned(fetcher_opb_and_ffff));
+    fetcher_sum_of_opb_partial <= STD_ULOGIC_VECTOR(UNSIGNED(fetcher_sum_of_opa) + UNSIGNED(fetcher_opb_and_ffff));
     -- The following VHDL code executes the (S1 + (B & 0xFFFF) + ((B >> 16) & 0xFFFF)).
-    fetcher_sum_of_opb         <= std_ulogic_vector(unsigned(fetcher_sum_of_opb_partial) + unsigned(fetcher_opb_shift_16));
+    fetcher_sum_of_opb         <= STD_ULOGIC_VECTOR(UNSIGNED(fetcher_sum_of_opb_partial) + UNSIGNED(fetcher_opb_shift_16));
 
     -- The following VHDL code executes the (S2 = (S1 + (B & 0xFFFF) + ((B >> 16) & 0xFFFF)) % 65536).
-    fetcher_partial <= std_ulogic_vector(unsigned(fetcher_sum_of_opb) mod unsigned(FLETCHER_CONST));
+    fetcher_partial <= STD_ULOGIC_VECTOR(UNSIGNED(fetcher_sum_of_opb) mod UNSIGNED(FLETCHER_CONST));
     -- The following VHDL code executes teh (S2 << 16). The last operation is done on the next clock.
     fetcher_partial_shifted <= fetcher_partial(15 downto 0) & "0000000000000000";
 
