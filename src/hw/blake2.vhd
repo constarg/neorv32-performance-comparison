@@ -1,8 +1,31 @@
 ----------------------------------------------------------------------------------
+--
+-- File: blakes2.vhd
+--
+-- Implements the blake's G function in hardware using the Custom 
+-- Function Subsystem (CFS).
+--
+-- Copyright (C) 2026  Constantinos Argyriou
+--
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- Email: constarg@pm.me
+--
 -- Engineer:  Constantinos Argyriou
 -- 
 -- Create Date: 02/23/2026 11:59:47 AM
--- Design Name:  Hash functions accelerator.  
+-- Design Name: Blakes2 Hash functions accelerator.  
 -- Module Name: neorv32_cfs - Behavioral
 -- Project Name: MSc - Embedded Systems design Exercise 
 -- Target Devices:  XC7A35T 
@@ -53,9 +76,9 @@ architecture neorv32_cfs_rtl of neorv32_cfs is
     constant CFS_ADDRESS_OF_STATUS : INTEGER := 6;
 
     -- Define the write only register type.
-    type cfs_wr_regs_t is array (0 to 6) of std_ulogic_vector(31 downto 0);
+    type cfs_wr_regs_t is array (0 to 6) of STD_ULOGIC_VECTOR(31 downto 0);
     -- Define the read only registers type.
-    type cfs_rd_regs_t is array (0 to 3) of std_ulogic_vector(31 downto 0); 
+    type cfs_rd_regs_t is array (0 to 3) of STD_ULOGIC_VECTOR(31 downto 0); 
 
     signal cfs_reg_wr : cfs_wr_regs_t; -- for WRITE accesses
     signal cfs_reg_rd : cfs_rd_regs_t; -- for READ accesses
