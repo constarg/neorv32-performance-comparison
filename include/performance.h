@@ -1,6 +1,7 @@
-/*
+/**
  * File: performance.h
  *
+ ***********************************************************************
  * Contains function definitions for comparing the performance
  * of software implementation of various hash functions against
  * their hardware implementation.
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #ifndef NEORV32_EXERCISE_PERFORMANCE_H
 #define NEORV32_EXERCISE_PERFORMANCE_H

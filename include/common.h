@@ -1,6 +1,7 @@
-/*
+/**
  * File: common.h
  *
+ ***********************************************************************
  * Contains common MACROS across the codebase..
  *
  * Copyright (C) 2026  Constantinos Argyriou
@@ -19,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #ifndef NEORV32_EXERCISE_COMMON_H
 #define NEORV32_EXERCISE_COMMON_H

@@ -2,6 +2,7 @@
 --
 -- File: hash_function_acceleration.vhd
 --
+------------------------------------------------------------------
 -- Implementes two hash functions using Custom Function Unit (CFU).
 -- The first is the Fletcher, 32-bits, hash and the second is 
 -- the xorshift hash function. 
@@ -22,6 +23,7 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- Email: constarg@pm.me
+------------------------------------------------------------------
 --
 -- Engineer:  Constantinos Argyriou
 -- 

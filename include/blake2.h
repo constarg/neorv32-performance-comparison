@@ -1,6 +1,7 @@
-/*
+/**
  * File: blakes2.h
  *
+ ***********************************************************************
  * Contains MACROS and function definition for the implementation of
  * blakes2 hash function in both software and hardware.
  *
@@ -20,6 +21,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #ifndef NEORV32_EXERCISE_BLAKE2_H
 #define NEORV32_EXERCISE_BLAKE2_H

@@ -2,6 +2,7 @@
 --
 -- File: blakes2.vhd
 --
+------------------------------------------------------------------
 -- Implements the blake's G function in hardware using the Custom 
 -- Function Subsystem (CFS).
 --
@@ -21,6 +22,7 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- Email: constarg@pm.me
+------------------------------------------------------------------
 --
 -- Engineer:  Constantinos Argyriou
 -- 

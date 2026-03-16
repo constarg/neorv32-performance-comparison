@@ -1,6 +1,7 @@
-/*
+/**
  * File: fletcher32.c
  *
+ ***********************************************************************
  * Implements the Fletcher, 32-bits, hash function in software.
  *
  * Copyright (C) 2026  Constantinos Argyriou
@@ -19,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #include "fetcher32.h"
 

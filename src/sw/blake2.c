@@ -1,6 +1,7 @@
-/*
+/**
  * File: blakes2.c
  *
+ ***********************************************************************
  * Implements the software for the blakes2 hash function, and invokes
  * the blakes2 function which is implemented in the hardware layer.
  *
@@ -20,6 +21,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #include "blake2.h"
 

@@ -1,6 +1,7 @@
-/*
+/**
  * File: main.c
  *
+ ***********************************************************************
  * Copyright (C) 2026  Constantinos Argyriou
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Email: constarg@pm.me
+ ***********************************************************************
  */
 #include <neorv32.h>
 #include <stdint.h>
