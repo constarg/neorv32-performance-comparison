@@ -19,9 +19,9 @@ sudo dnf group install "development-tools"
 Before proceeding with the compilation of the project, there are two things that must be configured. The first is the toolchain for the **RISC-V** architecture. The second is the NEORV32 project itself.
 
 ## Tool Chain 
-The project was compiled and tested using **riscv-none-elf-gcc-15.2.0-1**; please consider using this version.<br>
+The project was compiled and tested using **riscv-none-elf-gcc-15.2.0-1**; please consider using this version.<br><br>
 
-**IMPORTANT: If you do not have any RISC-V-compatible compiler on your system, you must install one; otherwise, this project will not compile.**<br<br>
+**IMPORTANT: If you do not have any RISC-V-compatible compiler on your system, you must install one; otherwise, this project will not compile.**<br><br>
 
 To download the RISC-V toolchain used for this project, please visit: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/<br><br>
 
